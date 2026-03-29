@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warzone Clicker - Elite Edition</title>
+    <style>
+        body { background: #0d0d0d; color: #00ff41; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; }
+        #game-container { max-width: 800px; margin: 20px auto; border: 2px solid #222; background: #000; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px #00ff4133; }
+        .stat-box { background: #111; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #333; }
+        h1 { letter-spacing: 5px; text-shadow: 2px 2px #ff0000; }
+        
+        .click-area { margin: 30px 0; }
+        #click-btn { background: #1a1a1a; color: #00ff41; border: 3px solid #00ff41; padding: 40px 60px; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.1s; border-radius: 50%; }
+        #click-btn:active { transform: scale(0.95); background: #00ff41; color: #000; }<a href="my-game.zip" download>Download My File Here</a>
+
+<a href="my-game.zip" download>
+  <button>Click to Download</button>
+</a>
+
+        .shop { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+        .upgrade-card { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .upgrade-card:hover { border-color: #00ff41; }
+        
+        button.buy-btn { background: #00ff41; color: #000; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; border-radius: 3px; }
+        button.buy-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        #dev-console { display: none; background: #300; color: #fff; padding: 20px; margin-top: 20px; border: 2px solid #f00; border-radius: 5px; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .admin-btn { background: #f00; color: #fff; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>VERDANSK CLICKER</h1>
+        
+        <div class="stat-box">
+            <h2 id="cash-display">Cash: $0</h2>
+            <p id="cps-display">Income: $0/sec</p>
+        </div>
+
+        <div class="click-area">
+            <button id="click-btn">LOOT BOX</button>
+        </div>
+
+        <h3>QUARTERMASTER (UPGRADES)</h3>
+        <div class="shop" id="shop-container">
+            </div>
+
+        <button onclick="accessDev()" style="margin-top: 40px; background: transparent; border: none; color: #222; cursor: pointer;">[SYS_ADMIN_LOGIN]</button>
+
+        <div id="dev-console">
+            <h2>--- CLASSIFIED ADMIN ACCESS ---</h2>
+            <div class="admin-grid">
+                <button class="admin-btn" onclick="adminAdd(100000)">+$100K</button>
+                <button class="admin-btn" onclick="adminAdd(10000000)">+$10M</button>
+                <button class="admin-btn" onclick="adminAdd(99999999999)">INFINITE</button>
+                <button class="admin-btn" onclick="modifyCPS(100)">+100 CPS</button>
+                <button class="admin-btn" onclick="modifyCPS(5000)">+5K CPS</button>
+                <button class="admin-btn" onclick="triggerNuke()">TACTICAL NUKE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cash = 0;
+        let income = 0;
+
+        const upgrades = [
+            { id: 1, name: "Armor Plate", cost: 15, boost: 1 },
+            { id: 2, name: "Scavenger Perk", cost: 100, boost: 8 },
+            { id: 3, name: "Supply Drop", cost: 500, boost: 35 },
+            { id: 4, name: "UAV Recon", cost: 2000, boost: 120 },
+            { id: 5, name: "Cluster Strike", cost: 10000, boost: 500 },
+            { id: 6, name: "Loadout Drop", cost: 50000, boost: 2200 },
+            { id: 7, name: "Advanced UAV", cost: 150000, boost: 8000 },
+            { id: 8, name: "Attack Chopper", cost: 1000000, boost: 45000 },
+            { id: 9, name: "Gunship", cost: 10000000, boost: 250000 },
+            { id: 10, name: "Gulag Control", cost: 100000000, boost: 1500000 }
+        ];
+
+        // Initialize Shop
+        const shopEl = document.getElementById('shop-container');
+        upgrades.forEach(upg => {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.innerHTML = `
+                <div>
+                    <strong>${upg.name}</strong><br>
+                    <small>+$${upg.boost}/s | Cost: $${upg.cost}</small>
+                </div>
+                <button class="buy-btn" id="btn-${upg.id}" onclick="buyUpgrade(${upg.id})">BUY</button>
+            `;
+            shopEl.appendChild(card);
+        });
+
+        function updateUI() {
+            document.getElementById('cash-display').innerText = `Cash: $${Math.floor(cash).toLocaleString()}`;
+            document.getElementById('cps-display').innerText = `Income: $${income.toLocaleString()}/sec`;
+            
+            // Disable buttons if can't afford
+            upgrades.forEach(upg => {
+                const btn = document.getElementById(`btn-${upg.id}`);
+                btn.disabled = cash < upg.cost;
+            });
+        }
+
+        // Click logic
+        document.getElementById('click-btn').addEventListener('click', () => {
+            cash += 1 + (income * 0.05); // Clicks give a bonus based on income
+            updateUI();
+        });
+
+        // Loop
+        setInterval(() => {
+            cash += income;
+            updateUI();
+        }, 1000);
+
+        function buyUpgrade(id) {
+            const upg = upgrades.find(u => u.id === id);
+            if (cash >= upg.cost) {
+                cash -= upg.cost;
+                income += upg.boost;
+                upg.cost = Math.floor(upg.cost * 1.2); // Price goes up
+                
+                // Update specific button text
+                const btn = document.getElementById(`btn-${id}`);
+                btn.previousElementSibling.querySelector('small').innerText = `+$${upg.boost}/s | Cost: $${upg.cost.toLocaleString()}`;
+                
+                updateUI();
+            }
+        }
+
+        // --- DEV MODE ---
+        function accessDev() {
+            const pass = prompt("ENTER OVERRIDE CODE:");
+            if (pass === "123454321") {
+                document.getElementById('dev-console').style.display = "block";
+            }
+        }
+
+        function adminAdd(amt) { cash += amt; updateUI(); }
+        function modifyCPS(amt) { income += amt; updateUI(); }
+        function triggerNuke() {
+            cash = 999999999999;
+            income = 100000000;
+            updateUI();
+            alert("TACTICAL NUKE INBOUND - STATS MAXED");
+        }
+    </script>
+</body>
+</html>
